@@ -1,0 +1,24 @@
+{
+  "name": "Fines",
+  "dbTable": "Fines",
+  "dbSchema": "library",
+  "plugin": "library",
+  "dbSource": "main",
+  "updateStrategy": "Upsert",
+  "insertDuplicate": "Upsert",
+  "pks": [
+    {
+      "key": "id",
+      "strategy": "AutoIncrement",
+      "type": "number"
+    }
+  ],
+  "permissions": {
+    "read": true,
+    "write": true,
+    "delete": true,
+    "update": true
+  },
+  "auditable": true
+}
+
