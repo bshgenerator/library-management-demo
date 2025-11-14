@@ -1,0 +1,17 @@
+[
+  {
+    "name": "admin",
+    "description": "Library Admin role",
+    "public": false
+  },
+  {
+    "name": "librarian",
+    "description": "Librarian role",
+    "public": false
+  },
+  {
+    "name": "member",
+    "description": "Member role",
+    "public": true
+  }
+]
