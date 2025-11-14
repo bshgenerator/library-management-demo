@@ -1,0 +1,63 @@
+[
+  {
+    "id": "1",
+    "bookId": "3",
+    "memberId": "1",
+    "type": "checkout",
+    "checkoutDate": "2024-01-10",
+    "dueDate": "2024-01-24",
+    "returnDate": null,
+    "status": "active"
+  },
+  {
+    "id": "2",
+    "bookId": "3",
+    "memberId": "2",
+    "type": "checkout",
+    "checkoutDate": "2024-01-08",
+    "dueDate": "2024-01-22",
+    "returnDate": null,
+    "status": "active"
+  },
+  {
+    "id": "3",
+    "bookId": "2",
+    "memberId": "3",
+    "type": "checkout",
+    "checkoutDate": "2024-01-05",
+    "dueDate": "2024-01-19",
+    "returnDate": null,
+    "status": "active"
+  },
+  {
+    "id": "4",
+    "bookId": "2",
+    "memberId": "1",
+    "type": "checkout",
+    "checkoutDate": "2023-12-15",
+    "dueDate": "2023-12-29",
+    "returnDate": "2023-12-28",
+    "status": "returned"
+  },
+  {
+    "id": "5",
+    "bookId": "6",
+    "memberId": "2",
+    "type": "checkout",
+    "checkoutDate": "2024-01-01",
+    "dueDate": "2024-01-15",
+    "returnDate": null,
+    "status": "overdue"
+  },
+  {
+    "id": "6",
+    "bookId": "6",
+    "memberId": "5",
+    "type": "checkout",
+    "checkoutDate": "2023-12-20",
+    "dueDate": "2024-01-03",
+    "returnDate": "2024-01-02",
+    "status": "returned"
+  }
+]
+

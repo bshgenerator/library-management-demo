@@ -1,0 +1,58 @@
+[
+  {
+    "id": "1",
+    "membershipId": "MEM001",
+    "name": "John Doe",
+    "email": "john.doe@email.com",
+    "phone": "555-0101",
+    "address": "123 Main St, City, State 12345",
+    "joinDate": "2023-01-15",
+    "status": "active",
+    "membershipType": "regular"
+  },
+  {
+    "id": "2",
+    "membershipId": "MEM002",
+    "name": "Jane Smith",
+    "email": "jane.smith@email.com",
+    "phone": "555-0102",
+    "address": "456 Oak Ave, City, State 12345",
+    "joinDate": "2023-02-20",
+    "status": "active",
+    "membershipType": "regular"
+  },
+  {
+    "id": "3",
+    "membershipId": "MEM003",
+    "name": "Bob Johnson",
+    "email": "bob.johnson@email.com",
+    "phone": "555-0103",
+    "address": "789 Pine Rd, City, State 12345",
+    "joinDate": "2023-03-10",
+    "status": "active",
+    "membershipType": "premium"
+  },
+  {
+    "id": "4",
+    "membershipId": "MEM004",
+    "name": "Alice Williams",
+    "email": "alice.williams@email.com",
+    "phone": "555-0104",
+    "address": "321 Elm St, City, State 12345",
+    "joinDate": "2022-11-05",
+    "status": "suspended",
+    "membershipType": "regular"
+  },
+  {
+    "id": "5",
+    "membershipId": "MEM005",
+    "name": "Charlie Brown",
+    "email": "charlie.brown@email.com",
+    "phone": "555-0105",
+    "address": "654 Maple Dr, City, State 12345",
+    "joinDate": "2023-04-12",
+    "status": "active",
+    "membershipType": "regular"
+  }
+]
+

@@ -1,0 +1,175 @@
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { transactionsAPI, reservationsAPI, finesAPI } from "@/services/api";
+import type { Transaction, Reservation, Fine } from "@/types";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BookOpen, Clock, DollarSign, AlertCircle } from "lucide-react";
+
+export default function MemberDashboard() {
+  const { user } = useAuth();
+  const [currentBooks, setCurrentBooks] = useState<Transaction[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [fines, setFines] = useState<Fine[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.memberId) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    if (!user?.memberId) return;
+    setLoading(true);
+    const [transactions, reservs, memberFines] = await Promise.all([
+      transactionsAPI.getByMemberId(user.memberId),
+      reservationsAPI.getByMemberId(user.memberId),
+      finesAPI.getByMemberId(user.memberId),
+    ]);
+
+    setCurrentBooks(transactions.filter((t) => t.status === "active"));
+    setReservations(reservs.filter((r) => r.status === "pending"));
+    setFines(memberFines.filter((f) => f.status === "unpaid"));
+    setLoading(false);
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  const totalFines = fines.reduce((sum, f) => sum + f.amount, 0);
+  const upcomingDueDates = currentBooks
+    .filter((t) => {
+      const dueDate = new Date(t.dueDate);
+      const today = new Date();
+      const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return daysUntilDue <= 7 && daysUntilDue > 0;
+    })
+    .length;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">My Dashboard</h1>
+        <p className="text-muted-foreground">Welcome back, {user?.name}</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Current Books</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{currentBooks.length}</div>
+            <p className="text-xs text-muted-foreground">Books borrowed</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Upcoming Due Dates</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{upcomingDueDates}</div>
+            <p className="text-xs text-muted-foreground">Due within 7 days</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Outstanding Fines</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalFines.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Unpaid fines</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Currently Borrowed Books</CardTitle>
+            <CardDescription>Books you have checked out</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {currentBooks.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No books currently borrowed</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Book ID</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {currentBooks.map((transaction) => {
+                    const dueDate = new Date(transaction.dueDate);
+                    const today = new Date();
+                    const isOverdue = dueDate < today;
+                    return (
+                      <TableRow key={transaction.id}>
+                        <TableCell>{transaction.bookId}</TableCell>
+                        <TableCell>{transaction.dueDate}</TableCell>
+                        <TableCell>
+                          {isOverdue ? (
+                            <span className="px-2 py-1 rounded text-xs bg-red-100 text-red-800 flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              Overdue
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">
+                              Active
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>My Reservations</CardTitle>
+            <CardDescription>Books you have reserved</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {reservations.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No active reservations</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Book ID</TableHead>
+                    <TableHead>Position</TableHead>
+                    <TableHead>Reserved Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reservations.map((reservation) => (
+                    <TableRow key={reservation.id}>
+                      <TableCell>{reservation.bookId}</TableCell>
+                      <TableCell>#{reservation.position}</TableCell>
+                      <TableCell>{reservation.reservationDate}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
