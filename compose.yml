@@ -1,6 +1,6 @@
 services:
   engine:
-    image: 'bshg/engine:0.0.1-beta.4'
+    image: 'bshg/engine:0.0.1-beta.8'
     container_name: 'library-engine'
     ports:
       - '2021:7071'
