@@ -8,9 +8,10 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "create-entities": "node scripts/create-entities.js"
+    "plugin:install": "node scripts/plugin-install.js"
   },
   "dependencies": {
+    "@bshsolutions/sdk": "^0.0.3",
     "@tailwindcss/postcss": "^4.1.17",
     "autoprefixer": "^10.4.22",
     "class-variance-authority": "^0.7.1",
