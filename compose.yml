@@ -1,6 +1,6 @@
 services:
   engine:
-    image: 'bshg/engine:0.0.1-beta'
+    image: 'bshg/engine:0.0.1-beta.4'
     container_name: 'library-engine'
     ports:
       - '2021:7071'
@@ -35,6 +35,16 @@ services:
       - '2023:80'
     networks:
       - library-net
+
+  mail-dev:
+    container_name: library-mail-dev
+    networks:
+      - library-net
+    image: maildev/maildev
+    ports:
+      - '1080:1080'
+      - '1025:1025'
+    restart: unless-stopped
 
 networks:
   library-net:
