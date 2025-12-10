@@ -8,9 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { bshengine } from "@/lib/bshengine";
+import type { BshResponse } from "@bshsolutions/sdk";
 
 export default function AdminBooks() {
-  const [books, setBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<BshResponse<Book>>({
+    data: [],
+    timestamp: 0,
+    code: 0,
+    status: ""
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -20,9 +27,18 @@ export default function AdminBooks() {
 
   const loadBooks = async () => {
     setLoading(true);
-    const data = await booksAPI.getAll();
-    setBooks(data);
-    setLoading(false);
+    await bshengine.entity('Books').search<Book>({
+      payload: {
+        pagination: {
+          page: 1,
+          size: 10
+        }
+      },
+      onSuccess: (response) => {
+        setBooks(response);
+        setLoading(false);
+      }
+    });
   };
 
   const handleSearch = async () => {
@@ -31,9 +47,29 @@ export default function AdminBooks() {
       return;
     }
     setLoading(true);
-    const results = await booksAPI.search(searchQuery);
-    setBooks(results);
-    setLoading(false);
+    await bshengine.entity('Books').search<Book>({
+      payload: {
+        filters: [
+          {
+            operator: 'or',
+            filters: [
+              {field: 'title', operator: 'ilike', value: searchQuery},
+              {field: 'author', operator: 'ilike', value: searchQuery},
+              {field: 'isbn', operator: 'ilike', value: searchQuery},
+              {field: 'genre', operator: 'ilike', value: searchQuery},
+            ]
+          }
+        ],
+        pagination: {
+          page: 1,
+          size: 10
+        }
+      },
+      onSuccess: (response) => {
+        setBooks(response);
+        setLoading(false);
+      }
+    });
   };
 
   const handleDelete = async (id: string) => {
@@ -78,7 +114,7 @@ export default function AdminBooks() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Books ({books.length})</CardTitle>
+          <CardTitle>Books ({books.pagination?.total || 0})</CardTitle>
           <CardDescription>All books in the library catalog</CardDescription>
         </CardHeader>
         <CardContent>
@@ -102,7 +138,7 @@ export default function AdminBooks() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {books.map((book) => (
+                {books.data.map((book) => (
                   <TableRow key={book.id}>
                     <TableCell className="font-medium">{book.title}</TableCell>
                     <TableCell>{book.author}</TableCell>
