@@ -11,7 +11,7 @@
     "plugin:install": "node scripts/plugin-install.js"
   },
   "dependencies": {
-    "@bshsolutions/sdk": "^0.0.5",
+    "@bshsolutions/sdk": "latest",
     "@tailwindcss/postcss": "^4.1.17",
     "autoprefixer": "^10.4.22",
     "class-variance-authority": "^0.7.1",

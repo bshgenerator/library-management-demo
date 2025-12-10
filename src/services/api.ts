@@ -12,6 +12,7 @@ import type {
   Fine,
   LibraryStats,
 } from "@/types";
+import { bshengine } from "@/lib/bshengine";
 
 // Simulate API delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -341,30 +342,74 @@ export const finesAPI = {
 // Stats API
 export const statsAPI = {
   getLibraryStats: async (): Promise<LibraryStats> => {
-    await delay(300);
-    const activeCheckouts = transactions.filter(
-      (t) => t.status === "active"
-    ).length;
-    const overdueBooks = transactions.filter(
-      (t) => t.status === "overdue"
-    ).length;
-    const totalRevenue = fines
-      .filter((f) => f.status === "paid")
-      .reduce((sum, f) => sum + f.amount, 0);
-    const pendingReservations = reservations.filter(
-      (r) => r.status === "pending"
-    ).length;
+    let stats: LibraryStats = {
+      totalBooks: 0,
+      totalMembers: 0,
+      activeCheckouts: 0,
+      overdueBooks: 0,
+      totalRevenue: 0,
+      pendingReservations: 0,
+    }
 
-    const stats: LibraryStats = {
-      totalBooks: books.length,
-      totalMembers: members.length,
-      activeCheckouts,
-      overdueBooks,
-      totalRevenue,
-      pendingReservations,
-    };
+    try {
+      const reqs = [
+        bshengine.entity('Books').count({}),
+        bshengine.user.search<{ count: number }>({
+          payload: {
+            filters: [
+              {field: 'roles', operator: 'ilike', value: 'member'}
+            ],
+            groupBy: {
+              aggregate: [
+                {function: 'COUNT', alias: 'count'}
+              ]
+            }
+          }
+        }),
+        bshengine.entity('Transactions').countFiltered<{ count: number }>({
+          payload: {
+            filters: [
+              {field: 'status', operator: 'eq', value: 'active'}
+            ]
+          }
+        }),
+        bshengine.entity('Transactions').countFiltered<{ count: number }>({
+          payload: {
+            filters: [
+              {field: 'status', operator: 'eq', value: 'overdue'}
+            ]
+          }
+        }),
+        bshengine.entity('Fines').countFiltered<{ count: number }>({
+          payload: {
+            filters: [
+              {field: 'status', operator: 'eq', value: 'paid'}
+            ]
+          }
+        }),
+        bshengine.entity('Reservations').countFiltered<{ count: number }>({
+          payload: {
+            filters: [
+              { field: 'status', operator: 'eq', value: 'pending'}
+            ]
+          }
+        }),
+      ]
+  
+      const [totalBooks, totalMembers, activeCheckouts, overdueBooks, totalRevenue, pendingReservations] = await Promise.all(reqs);
 
-    // console.log("GET LIBRARY STATS:", stats);
+      stats.totalBooks = totalBooks?.data[0]?.count || 0;
+      stats.totalMembers = totalMembers?.data[0]?.count || 0;
+      stats.activeCheckouts = activeCheckouts?.data[0]?.count || 0;
+      stats.overdueBooks = overdueBooks?.data[0]?.count || 0;
+      stats.totalRevenue = totalRevenue?.data[0]?.count || 0;
+      stats.pendingReservations = pendingReservations?.data[0]?.count || 0;
+
+      console.log(stats);
+    } catch (error) {
+      console.error('Error fetching library stats:', error);
+    }
+
     return stats;
   },
 };

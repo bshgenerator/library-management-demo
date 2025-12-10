@@ -1,0 +1,30 @@
+[
+    {
+        "name": "LIBRARY_ADMIN_POLICY",
+        "description": "Library Admin can do anything",
+        "principals": [
+            {
+                "type": "ROLE",
+                "value": [
+                    "admin"
+                ]
+            }
+        ],
+        "permissions": [
+            {
+                "entity": [
+                    "Books",
+                    "Members",
+                    "Transactions",
+                    "Fines",
+                    "Reservations"
+                ],
+                "actions": [
+                    "*"
+                ],
+                "allow": true
+            }
+        ],
+        "enabled": true
+    }
+]
