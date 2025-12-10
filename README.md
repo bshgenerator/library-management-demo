@@ -1,73 +1,115 @@
-# React + TypeScript + Vite
+# Library Management (Demo App)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This application is a demo and example of using [Bsh Engine](https://engine.bousalih.com/) as a backend service for a library management system.
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js (v18 or higher)
+- Docker and Docker Compose
+- npm or yarn
 
-## React Compiler
+## How to Launch
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Start Docker Services
 
-## Expanding the ESLint configuration
+- Add `.env` a copy of `.env.example`
+- Run the Docker Compose file to start the required services:
+  ```sh
+  docker compose up -d
+  ```
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+This will start:
+- Bsh Engine
+- PostgreSQL database
+- pgAdmin4 (database management UI)
+- MailDev (development mail server)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 2. Access Bsh Engine Admin
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+access the admin panel at:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+http://localhost:2021/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Default admin credentials (from `.env`):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+Username: bshadmin@library.com
+Password: password
+```
+
+### 3. Create API Key
+
+To install the app plugin, you need to create a new API key:
+
+1. Navigate to: `http://localhost:2021/security/api-keys/create`
+2. Choose **MACHINE** type
+3. Set scope to `*:*` to give access to all resources
+4. Copy the generated API key
+
+### 4. Configure Environment Variables
+
+```bash
+APP_BSH_ENTITIES_APIKEY=your_api_key_here
+APP_BSH_ENGINE_URL=http://localhost:2021
+```
+
+### 5. Install Dependencies
+```sh
+npm install
+```
+
+### 5. Install Plugin
+
+Install the library plugin to set up entities, roles, and policies and dumy data to start with:
+
+```sh
+npm run plugin:install
+```
+
+This will create the necessary entities (Books, Members, Transactions, Reservations, Fines, Genres) and configure roles and policies in the Bsh Engine.
+
+### 6. Run the Application
+
+```sh
+npm run dev
+```
+
+The application will be available at `http://localhost:2020`
+
+## Project Structure
+
+```
+library-demo/
+├── bshplugin/          # Bsh Engine plugin
+│   ├── core/          # Core entities, roles, and policies
+│   └── library/       # Library-specific data
+├── src/
+│   ├── components/    # React components
+│   ├── contexts/      # React contexts (Auth)
+│   ├── pages/         # Page components (Admin, Librarian, Member)
+│   ├── services/      # API services
+│   └── types/         # TypeScript type definitions
+├── scripts/           # Utility scripts
+└── compose.yml        # Docker Compose configuration
+```
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run plugin:install` - Install Bsh plugin
+
+## Services
+
+- **Frontend**: `http://localhost:2020`
+- **Bsh Engine**: `http://localhost:2021`
+- **pgAdmin**: `http://localhost:2023` (admin@library.com / 123)
+- **MailDev**: `http://localhost:1080`
+
+## License
+
+This is a demo application for educational purposes.
