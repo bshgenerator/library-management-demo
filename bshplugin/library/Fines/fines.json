@@ -1,0 +1,33 @@
+[
+  {
+    "memberId": "2",
+    "transactionId": "5",
+    "amount": 15.50,
+    "reason": "overdue",
+    "issueDate": "2024-01-16",
+    "dueDate": "2024-02-16",
+    "paymentDate": null,
+    "status": "unpaid"
+  },
+  {
+    "memberId": "4",
+    "transactionId": null,
+    "amount": 5.00,
+    "reason": "lost_book",
+    "issueDate": "2023-11-20",
+    "dueDate": "2023-12-20",
+    "paymentDate": null,
+    "status": "unpaid"
+  },
+  {
+    "memberId": "1",
+    "transactionId": null,
+    "amount": 2.50,
+    "reason": "damaged_book",
+    "issueDate": "2023-12-10",
+    "dueDate": "2024-01-10",
+    "paymentDate": "2023-12-15",
+    "status": "paid"
+  }
+]
+

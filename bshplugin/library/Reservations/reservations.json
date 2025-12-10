@@ -1,0 +1,24 @@
+[
+  {
+    "bookId": "3",
+    "memberId": "3",
+    "reservationDate": "2024-01-12",
+    "status": "pending",
+    "position": 1
+  },
+  {
+    "bookId": "3",
+    "memberId": "5",
+    "reservationDate": "2024-01-13",
+    "status": "pending",
+    "position": 2
+  },
+  {
+    "bookId": "2",
+    "memberId": "4",
+    "reservationDate": "2024-01-11",
+    "status": "pending",
+    "position": 1
+  }
+]
+
