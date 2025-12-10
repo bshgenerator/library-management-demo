@@ -1,14 +1,5 @@
 export type UserRole = "admin" | "librarian" | "member";
 
-export interface User {
-  id: string;
-  email: string;
-  password: string;
-  role: UserRole;
-  name: string;
-  memberId?: string;
-}
-
 export interface Book {
   id: string;
   isbn: string;

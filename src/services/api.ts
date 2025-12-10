@@ -3,7 +3,6 @@ import membersData from "@/data/members.json";
 import transactionsData from "@/data/transactions.json";
 import reservationsData from "@/data/reservations.json";
 import finesData from "@/data/fines.json";
-import usersData from "@/data/users.json";
 import genresData from "@/data/genres.json";
 import type {
   Book,
@@ -11,7 +10,6 @@ import type {
   Transaction,
   Reservation,
   Fine,
-  User,
   LibraryStats,
 } from "@/types";
 
@@ -24,52 +22,19 @@ let members: Member[] = [...membersData] as Member[];
 let transactions: Transaction[] = [...transactionsData] as Transaction[];
 let reservations: Reservation[] = [...reservationsData] as Reservation[];
 let fines: Fine[] = [...finesData] as Fine[];
-const users: User[] = [...usersData] as User[];
 const genres: string[] = [...genresData] as string[];
-
-// Authentication
-export const authAPI = {
-  login: async (email: string, password: string): Promise<User | null> => {
-    await delay(500);
-    const user = users.find(
-      (u) => u.email === email && u.password === password
-    );
-    if (user) {
-      const { password: _, ...userWithoutPassword } = user;
-      console.log("LOGIN:", { email, user: userWithoutPassword });
-      return user as User;
-    }
-    return null;
-  },
-
-  getCurrentUser: (): User | null => {
-    const stored = localStorage.getItem("currentUser");
-    return stored ? JSON.parse(stored) : null;
-  },
-
-  setCurrentUser: (user: User | null) => {
-    if (user) {
-      localStorage.setItem("currentUser", JSON.stringify(user));
-      console.log("SET USER:", user);
-    } else {
-      localStorage.removeItem("currentUser");
-      console.log("LOGOUT");
-    }
-  },
-};
-
 // Books API
 export const booksAPI = {
   getAll: async (): Promise<Book[]> => {
     await delay(300);
-    console.log("GET ALL BOOKS:", books.length);
+    // console.log("GET ALL BOOKS:", books.length);
     return books;
   },
 
   getById: async (id: string): Promise<Book | null> => {
     await delay(200);
     const book = books.find((b) => b.id === id);
-    console.log("GET BOOK BY ID:", id, book);
+    // console.log("GET BOOK BY ID:", id, book);
     return book || null;
   },
 
@@ -82,7 +47,7 @@ export const booksAPI = {
         b.author.toLowerCase().includes(lowerQuery) ||
         b.isbn.includes(query)
     );
-    console.log("SEARCH BOOKS:", query, results.length);
+    // console.log("SEARCH BOOKS:", query, results.length);
     return results;
   },
 
@@ -93,7 +58,7 @@ export const booksAPI = {
       id: Date.now().toString(),
     };
     books.push(newBook);
-    console.log("CREATE BOOK:", newBook);
+    // console.log("CREATE BOOK:", newBook);
     return newBook;
   },
 
@@ -102,14 +67,14 @@ export const booksAPI = {
     const index = books.findIndex((b) => b.id === id);
     if (index === -1) throw new Error("Book not found");
     books[index] = { ...books[index], ...updates };
-    console.log("UPDATE BOOK:", id, updates);
+    // console.log("UPDATE BOOK:", id, updates);
     return books[index];
   },
 
   delete: async (id: string): Promise<void> => {
     await delay(300);
     books = books.filter((b) => b.id !== id);
-    console.log("DELETE BOOK:", id);
+    // console.log("DELETE BOOK:", id);
   },
 
   getGenres: async (): Promise<string[]> => {
@@ -122,14 +87,14 @@ export const booksAPI = {
 export const membersAPI = {
   getAll: async (): Promise<Member[]> => {
     await delay(300);
-    console.log("GET ALL MEMBERS:", members.length);
+    // console.log("GET ALL MEMBERS:", members.length);
     return members;
   },
 
   getById: async (id: string): Promise<Member | null> => {
     await delay(200);
     const member = members.find((m) => m.id === id);
-    console.log("GET MEMBER BY ID:", id, member);
+    // console.log("GET MEMBER BY ID:", id, member);
     return member || null;
   },
 
@@ -142,7 +107,7 @@ export const membersAPI = {
         m.email.toLowerCase().includes(lowerQuery) ||
         m.membershipId.toLowerCase().includes(lowerQuery)
     );
-    console.log("SEARCH MEMBERS:", query, results.length);
+    // console.log("SEARCH MEMBERS:", query, results.length);
     return results;
   },
 
@@ -154,7 +119,7 @@ export const membersAPI = {
       membershipId: `MEM${String(members.length + 1).padStart(3, "0")}`,
     };
     members.push(newMember);
-    console.log("CREATE MEMBER:", newMember);
+    // console.log("CREATE MEMBER:", newMember);
     return newMember;
   },
 
@@ -163,14 +128,14 @@ export const membersAPI = {
     const index = members.findIndex((m) => m.id === id);
     if (index === -1) throw new Error("Member not found");
     members[index] = { ...members[index], ...updates };
-    console.log("UPDATE MEMBER:", id, updates);
+    // console.log("UPDATE MEMBER:", id, updates);
     return members[index];
   },
 
   delete: async (id: string): Promise<void> => {
     await delay(300);
     members = members.filter((m) => m.id !== id);
-    console.log("DELETE MEMBER:", id);
+    // console.log("DELETE MEMBER:", id);
   },
 };
 
@@ -178,7 +143,7 @@ export const membersAPI = {
 export const transactionsAPI = {
   getAll: async (): Promise<Transaction[]> => {
     await delay(300);
-    console.log("GET ALL TRANSACTIONS:", transactions.length);
+    // console.log("GET ALL TRANSACTIONS:", transactions.length);
     return transactions;
   },
 
@@ -187,14 +152,14 @@ export const transactionsAPI = {
     const memberTransactions = transactions.filter(
       (t) => t.memberId === memberId
     );
-    console.log("GET TRANSACTIONS BY MEMBER:", memberId, memberTransactions.length);
+    // console.log("GET TRANSACTIONS BY MEMBER:", memberId, memberTransactions.length);
     return memberTransactions;
   },
 
   getByBookId: async (bookId: string): Promise<Transaction[]> => {
     await delay(200);
     const bookTransactions = transactions.filter((t) => t.bookId === bookId);
-    console.log("GET TRANSACTIONS BY BOOK:", bookId, bookTransactions.length);
+    // console.log("GET TRANSACTIONS BY BOOK:", bookId, bookTransactions.length);
     return bookTransactions;
   },
 
@@ -226,7 +191,7 @@ export const transactionsAPI = {
       book.status = "checked_out";
     }
 
-    console.log("CHECKOUT:", newTransaction);
+    // console.log("CHECKOUT:", newTransaction);
     return newTransaction;
   },
 
@@ -245,7 +210,7 @@ export const transactionsAPI = {
       book.status = "available";
     }
 
-    console.log("RETURN:", transaction);
+    // console.log("RETURN:", transaction);
     return transaction;
   },
 
@@ -255,7 +220,7 @@ export const transactionsAPI = {
     if (!transaction) throw new Error("Transaction not found");
 
     transaction.dueDate = newDueDate;
-    console.log("RENEW:", transaction);
+    // console.log("RENEW:", transaction);
     return transaction;
   },
 };
@@ -264,7 +229,7 @@ export const transactionsAPI = {
 export const reservationsAPI = {
   getAll: async (): Promise<Reservation[]> => {
     await delay(300);
-    console.log("GET ALL RESERVATIONS:", reservations.length);
+    // console.log("GET ALL RESERVATIONS:", reservations.length);
     return reservations;
   },
 
@@ -273,14 +238,14 @@ export const reservationsAPI = {
     const memberReservations = reservations.filter(
       (r) => r.memberId === memberId
     );
-    console.log("GET RESERVATIONS BY MEMBER:", memberId, memberReservations.length);
+    // console.log("GET RESERVATIONS BY MEMBER:", memberId, memberReservations.length);
     return memberReservations;
   },
 
   getByBookId: async (bookId: string): Promise<Reservation[]> => {
     await delay(200);
     const bookReservations = reservations.filter((r) => r.bookId === bookId);
-    console.log("GET RESERVATIONS BY BOOK:", bookId, bookReservations.length);
+    // console.log("GET RESERVATIONS BY BOOK:", bookId, bookReservations.length);
     return bookReservations;
   },
 
@@ -302,7 +267,7 @@ export const reservationsAPI = {
     };
 
     reservations.push(newReservation);
-    console.log("CREATE RESERVATION:", newReservation);
+    // console.log("CREATE RESERVATION:", newReservation);
     return newReservation;
   },
 
@@ -321,7 +286,7 @@ export const reservationsAPI = {
         )
         .forEach((r) => r.position--);
     }
-    console.log("CANCEL RESERVATION:", id);
+    // console.log("CANCEL RESERVATION:", id);
   },
 };
 
@@ -329,14 +294,14 @@ export const reservationsAPI = {
 export const finesAPI = {
   getAll: async (): Promise<Fine[]> => {
     await delay(300);
-    console.log("GET ALL FINES:", fines.length);
+    // console.log("GET ALL FINES:", fines.length);
     return fines;
   },
 
   getByMemberId: async (memberId: string): Promise<Fine[]> => {
     await delay(200);
     const memberFines = fines.filter((f) => f.memberId === memberId);
-    console.log("GET FINES BY MEMBER:", memberId, memberFines.length);
+    // console.log("GET FINES BY MEMBER:", memberId, memberFines.length);
     return memberFines;
   },
 
@@ -347,7 +312,7 @@ export const finesAPI = {
       id: Date.now().toString(),
     };
     fines.push(newFine);
-    console.log("CREATE FINE:", newFine);
+    // console.log("CREATE FINE:", newFine);
     return newFine;
   },
 
@@ -357,7 +322,7 @@ export const finesAPI = {
     if (!fine) throw new Error("Fine not found");
     fine.status = "paid";
     fine.paymentDate = new Date().toISOString().split("T")[0];
-    console.log("PAY FINE:", id);
+    // console.log("PAY FINE:", id);
     return fine;
   },
 
@@ -368,7 +333,7 @@ export const finesAPI = {
     fine.status = "paid";
     fine.paymentDate = new Date().toISOString().split("T")[0];
     fine.amount = 0;
-    console.log("WAIVE FINE:", id);
+    // console.log("WAIVE FINE:", id);
     return fine;
   },
 };
@@ -399,7 +364,7 @@ export const statsAPI = {
       pendingReservations,
     };
 
-    console.log("GET LIBRARY STATS:", stats);
+    // console.log("GET LIBRARY STATS:", stats);
     return stats;
   },
 };

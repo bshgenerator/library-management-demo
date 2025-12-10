@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { BshError } from "@bshsolutions/sdk/types";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -19,13 +20,20 @@ export default function Login() {
     setError("");
     setIsLoading(true);
 
-    const success = await login(email, password);
-    if (success) {
-      navigate("/dashboard");
-    } else {
-      setError("Invalid email or password");
+    try {
+      const success = await login(email, password);
+      if (success) {
+        navigate("/dashboard");
+      } else {
+        setError("Invalid email or password");
+      }
     }
-    setIsLoading(false);
+    catch (error) {
+      setError((error as BshError).response?.error || "An error occurred");
+    }
+    finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -60,7 +68,7 @@ export default function Login() {
               />
             </div>
             {error && (
-              <div className="text-sm text-destructive">{error}</div>
+              <div className="text-sm text-destructive text-red-500">{error}</div>
             )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}

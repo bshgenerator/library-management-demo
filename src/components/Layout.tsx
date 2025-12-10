@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, BookOpen, Users, Settings } from "lucide-react";
+import { LogOut, BookOpen } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -33,7 +33,7 @@ export default function Layout({ children }: LayoutProps) {
                 >
                   Dashboard
                 </Link>
-                {user?.role === "admin" && (
+                {user?.roles?.includes("admin") && (
                   <>
                     <Link
                       to="/admin/books"
@@ -61,7 +61,7 @@ export default function Layout({ children }: LayoutProps) {
                     </Link>
                   </>
                 )}
-                {user?.role === "librarian" && (
+                {user?.roles?.includes("librarian") && (
                   <>
                     <Link
                       to="/librarian/checkout"
@@ -83,7 +83,7 @@ export default function Layout({ children }: LayoutProps) {
                     </Link>
                   </>
                 )}
-                {user?.role === "member" && (
+                {user?.roles?.includes("member") && (
                   <>
                     <Link
                       to="/member/books"
@@ -109,7 +109,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">
-                {user?.name} ({user?.role})
+                {user?.profile?.firstName} {user?.profile?.lastName} ({user?.roles?.join(", ")})
               </span>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
