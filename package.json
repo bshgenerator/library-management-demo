@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "plugin:install": "node scripts/plugin-install.js"
+    "plugin:install": "node scripts/plugin-install.js",
+    "plugin:clean": "node scripts/plugin-clean.js"
   },
   "dependencies": {
     "@bshsolutions/sdk": "^0.0.8",
