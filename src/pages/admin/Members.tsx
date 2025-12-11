@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
-import { membersAPI } from "@/services/api";
-import type { Member } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import type { BshResponse } from "@bshsolutions/sdk/types";
+import { bshengine } from "@/lib/bshengine";
+import type { Member } from "@/types";
 
 export default function AdminMembers() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<BshResponse<Member>>({
+    data: [],
+    timestamp: 0,
+    code: 0,
+    status: ""
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -19,8 +25,17 @@ export default function AdminMembers() {
 
   const loadMembers = async () => {
     setLoading(true);
-    const data = await membersAPI.getAll();
-    setMembers(data);
+    await bshengine.user.search<Member>({
+      payload: {
+        filters: [
+          {field: 'roles', operator: 'ilike', value: 'member'}
+        ]
+      },
+      onSuccess: (response) => {
+        setMembers(response);
+        setLoading(false);
+      }
+    })
     setLoading(false);
   };
 
@@ -30,14 +45,23 @@ export default function AdminMembers() {
       return;
     }
     setLoading(true);
-    const results = await membersAPI.search(searchQuery);
-    setMembers(results);
-    setLoading(false);
+    await bshengine.user.search<Member>({
+      payload: {
+        filters: [
+          {field: 'roles', operator: 'ilike', value: 'member'},
+          {field: 'profile', operator: 'ilike', value: searchQuery}
+        ]
+      },
+      onSuccess: (response) => {
+        setMembers(response);
+        setLoading(false);
+      }
+    })
   };
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this member?")) {
-      await membersAPI.delete(id);
+      await bshengine.user.deleteById({id: id});
       loadMembers();
     }
   };
@@ -77,7 +101,7 @@ export default function AdminMembers() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Members ({members.length})</CardTitle>
+          <CardTitle>Members ({members.pagination?.total || 0})</CardTitle>
           <CardDescription>All registered library members</CardDescription>
         </CardHeader>
         <CardContent>
@@ -97,20 +121,26 @@ export default function AdminMembers() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell>{member.membershipId}</TableCell>
+                {members.data.map((member) => (
+                  <TableRow key={member.userId}>
+                    <TableCell className="font-medium">{member.profile?.firstName} {member.profile?.lastName}</TableCell>
+                    <TableCell>{member.profile?.membershipId || 'N/A'}</TableCell>
                     <TableCell>{member.email}</TableCell>
-                    <TableCell>{member.phone}</TableCell>
+                    <TableCell>{member.profile?.phone}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={member.status === "active" ? "success" : "destructive"}
+                        variant={
+                          member.status === "ACTIVATED" ? "success" :
+                          member.status === "REQUIRED_ACTIVATION" ? "warning" :
+                          member.status === "DISABLED" ? "destructive" :
+                          member.status === "REQUIRED_RESET_PASSWORD" ? "warning" :
+                          "secondary"
+                        }
                       >
                         {member.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{member.membershipType}</TableCell>
+                    <TableCell>{member.profile?.membershipType || 'N/A'}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm">
@@ -119,7 +149,7 @@ export default function AdminMembers() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(member.id)}
+                          onClick={() => handleDelete(member.userId)}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>

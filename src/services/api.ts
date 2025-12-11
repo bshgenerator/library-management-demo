@@ -19,7 +19,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Load data from JSON (in a real app, this would be from localStorage or API)
 let books: Book[] = [...booksData] as Book[];
-let members: Member[] = [...membersData] as Member[];
+let members: Member[] = [...membersData] as unknown as Member[];
 let transactions: Transaction[] = [...transactionsData] as Transaction[];
 let reservations: Reservation[] = [...reservationsData] as Reservation[];
 let fines: Fine[] = [...finesData] as Fine[];

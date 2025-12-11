@@ -1,3 +1,5 @@
+import type { BshUser } from "@bshsolutions/sdk/types";
+
 export type UserRole = "admin" | "librarian" | "member";
 
 export interface Book {
@@ -14,16 +16,17 @@ export interface Book {
   status: "available" | "checked_out" | "reserved" | "lost" | "damaged";
 }
 
-export interface Member {
-  id: string;
-  membershipId: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  joinDate: string;
-  status: "active" | "suspended" | "inactive";
-  membershipType: "regular" | "premium";
+export type Member = BshUser & {
+  profile: {
+    membershipId: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    address: string;
+    joinDate: string;
+    status: "active" | "suspended" | "inactive";
+    membershipType: "regular" | "premium";
+  };
 }
 
 export interface Transaction {
