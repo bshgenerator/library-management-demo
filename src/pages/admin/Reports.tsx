@@ -1,35 +1,71 @@
-import { useEffect, useState } from "react";
-import { transactionsAPI, finesAPI, booksAPI, membersAPI } from "@/services/api";
+import { useCallback, useEffect, useState } from "react";
 import type { Transaction, Fine } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { bshengine } from "@/lib/bshengine";
+import type { BshResponse } from "@bshsolutions/sdk/types";
 
 export default function AdminReports() {
-  const [activeCheckouts, setActiveCheckouts] = useState<Transaction[]>([]);
-  const [overdueBooks, setOverdueBooks] = useState<Transaction[]>([]);
-  const [unpaidFines, setUnpaidFines] = useState<Fine[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeCheckouts, setActiveCheckouts] = useState<BshResponse<Transaction>>({data: []} as unknown as BshResponse<Transaction>);
+  const [overdueBooks, setOverdueBooks] = useState<BshResponse<Transaction>>({data: []} as unknown as BshResponse<Transaction>);
+  const [unpaidFines, setUnpaidFines] = useState<BshResponse<Fine>>({data: []} as unknown as BshResponse<Fine>);
 
-  useEffect(() => {
-    loadReports();
+  const loadActiveCheckouts = useCallback(async () => {
+    await bshengine.entity('Transactions').search<Transaction>({
+      payload: {
+        filters: [
+          { field: 'status', operator: 'eq', value: 'active' }
+        ],
+        pagination: {
+          page: 1,
+          size: 5
+        }
+      },
+      onSuccess: (response) => {
+        setActiveCheckouts(response);
+      }
+    });
   }, []);
 
-  const loadReports = async () => {
-    setLoading(true);
-    const [transactions, fines] = await Promise.all([
-      transactionsAPI.getAll(),
-      finesAPI.getAll(),
-    ]);
+  const loadOverdueBooks = useCallback(async () => {
+    await bshengine.entity('Transactions').search<Transaction>({
+      payload: {
+        filters: [
+          { field: 'status', operator: 'eq', value: 'overdue' }
+        ],
+        pagination: {
+          page: 1,
+          size: 5
+        }
+      },
+      onSuccess: (response) => {
+        setOverdueBooks(response);
+      }
+    });
+  }, []);
 
-    setActiveCheckouts(transactions.filter((t) => t.status === "active"));
-    setOverdueBooks(transactions.filter((t) => t.status === "overdue"));
-    setUnpaidFines(fines.filter((f) => f.status === "unpaid"));
-    setLoading(false);
-  };
+  const loadUnpaidFines = useCallback(async () => {
+    await bshengine.entity('Fines').search<Fine>({
+      payload: {
+        filters: [
+          { field: 'status', operator: 'eq', value: 'unpaid' }
+        ],
+        pagination: {
+          page: 1,
+          size: 5
+        }
+      },
+      onSuccess: (response) => {
+        setUnpaidFines(response);
+      }
+    });
+  }, []);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  useEffect(() => {
+    loadActiveCheckouts()
+    loadOverdueBooks()
+    loadUnpaidFines()
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -40,13 +76,14 @@ export default function AdminReports() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Active Checkouts</CardTitle>
+          <CardTitle>Active Checkouts ({activeCheckouts.pagination?.total || 0})</CardTitle>
           <CardDescription>Books currently checked out</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>Book ID</TableHead>
                 <TableHead>Member ID</TableHead>
                 <TableHead>Checkout Date</TableHead>
@@ -55,8 +92,9 @@ export default function AdminReports() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activeCheckouts.map((transaction) => (
+              {activeCheckouts.data.map((transaction) => (
                 <TableRow key={transaction.id}>
+                  <TableCell>{transaction.id}</TableCell>
                   <TableCell>{transaction.bookId}</TableCell>
                   <TableCell>{transaction.memberId}</TableCell>
                   <TableCell>{transaction.checkoutDate}</TableCell>
@@ -75,13 +113,14 @@ export default function AdminReports() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Overdue Books</CardTitle>
+          <CardTitle>Overdue Books ({overdueBooks.pagination?.total || 0})</CardTitle>
           <CardDescription>Books past their due date</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>Book ID</TableHead>
                 <TableHead>Member ID</TableHead>
                 <TableHead>Checkout Date</TableHead>
@@ -90,8 +129,9 @@ export default function AdminReports() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {overdueBooks.map((transaction) => (
+              {overdueBooks.data.map((transaction) => (
                 <TableRow key={transaction.id}>
+                  <TableCell>{transaction.id}</TableCell>
                   <TableCell>{transaction.bookId}</TableCell>
                   <TableCell>{transaction.memberId}</TableCell>
                   <TableCell>{transaction.checkoutDate}</TableCell>
@@ -110,13 +150,14 @@ export default function AdminReports() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Unpaid Fines</CardTitle>
+          <CardTitle>Unpaid Fines ({unpaidFines.pagination?.total || 0})</CardTitle>
           <CardDescription>Outstanding fine payments</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>Member ID</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Reason</TableHead>
@@ -126,8 +167,9 @@ export default function AdminReports() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {unpaidFines.map((fine) => (
+              {unpaidFines.data.map((fine) => (
                 <TableRow key={fine.id}>
+                  <TableCell>{fine.id}</TableCell>
                   <TableCell>{fine.memberId}</TableCell>
                   <TableCell>${fine.amount.toFixed(2)}</TableCell>
                   <TableCell>{fine.reason}</TableCell>
