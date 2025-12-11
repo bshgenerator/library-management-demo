@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { booksAPI } from "@/services/api";
 import type { Book } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
+import { bshengine } from "@/lib/bshengine";
+import type { BshResponse } from "@bshsolutions/sdk/types";
 
 export default function LibrarianBooks() {
-  const [books, setBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<BshResponse<Book>>({data: []} as unknown as BshResponse<Book>);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -19,9 +20,18 @@ export default function LibrarianBooks() {
 
   const loadBooks = async () => {
     setLoading(true);
-    const data = await booksAPI.getAll();
-    setBooks(data);
-    setLoading(false);
+    await bshengine.entity('Books').search<Book>({
+      payload: {
+        pagination: {
+          page: 1,
+          size: 5
+        }
+      },
+      onSuccess: (response) => {
+        setBooks(response);
+        setLoading(false);
+      }
+    });
   };
 
   const handleSearch = async () => {
@@ -30,9 +40,29 @@ export default function LibrarianBooks() {
       return;
     }
     setLoading(true);
-    const results = await booksAPI.search(searchQuery);
-    setBooks(results);
-    setLoading(false);
+    await bshengine.entity('Books').search<Book>({
+      payload: {
+        filters: [
+          {
+            operator: 'or',
+            filters: [
+              {field: 'title', operator: 'ilike', value: searchQuery},
+              {field: 'author', operator: 'ilike', value: searchQuery},
+              {field: 'isbn', operator: 'ilike', value: searchQuery},
+              {field: 'genre', operator: 'ilike', value: searchQuery},
+            ]
+          }
+        ],
+        pagination: {
+          page: 1,
+          size: 5
+        }
+      },
+      onSuccess: (response) => {
+        setBooks(response);
+        setLoading(false);
+      }
+    });
   };
 
   return (
@@ -64,7 +94,7 @@ export default function LibrarianBooks() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Books ({books.length})</CardTitle>
+          <CardTitle>Books ({books.pagination?.total || 0})</CardTitle>
           <CardDescription>Available books in the library</CardDescription>
         </CardHeader>
         <CardContent>
@@ -83,7 +113,7 @@ export default function LibrarianBooks() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {books.map((book) => (
+                {books.data.map((book) => (
                   <TableRow key={book.id}>
                     <TableCell className="font-medium">{book.title}</TableCell>
                     <TableCell>{book.author}</TableCell>

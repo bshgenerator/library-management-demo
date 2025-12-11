@@ -6,7 +6,8 @@
             {
                 "type": "ROLE",
                 "value": [
-                    "admin"
+                    "admin",
+                    "librarian"
                 ]
             }
         ],

@@ -405,7 +405,6 @@ export const statsAPI = {
       stats.totalRevenue = totalRevenue?.data[0]?.count || 0;
       stats.pendingReservations = pendingReservations?.data[0]?.count || 0;
 
-      console.log(stats);
     } catch (error) {
       console.error('Error fetching library stats:', error);
     }

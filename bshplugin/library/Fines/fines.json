@@ -1,6 +1,7 @@
 [
   {
-    "memberId": "2",
+    "id": "1",
+    "memberId": "john.doe@email.com",
     "transactionId": "5",
     "amount": 15.50,
     "reason": "overdue",
@@ -10,7 +11,8 @@
     "status": "unpaid"
   },
   {
-    "memberId": "4",
+    "id": "2",
+    "memberId": "jane.smith@email.com",
     "transactionId": null,
     "amount": 5.00,
     "reason": "lost_book",
@@ -20,7 +22,8 @@
     "status": "unpaid"
   },
   {
-    "memberId": "1",
+    "id": "3",
+    "memberId": "bob.johnson@email.com",
     "transactionId": null,
     "amount": 2.50,
     "reason": "damaged_book",

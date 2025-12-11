@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { membersAPI, transactionsAPI, finesAPI } from "@/services/api";
 import type { Member, Transaction, Fine } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
+import { bshengine } from "@/lib/bshengine";
+import type { BshResponse } from "@bshsolutions/sdk/types";
 
 export default function LibrarianMembers() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<BshResponse<Member>>({data: []} as unknown as BshResponse<Member>);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [memberTransactions, setMemberTransactions] = useState<Transaction[]>([]);
   const [memberFines, setMemberFines] = useState<Fine[]>([]);
@@ -22,9 +23,17 @@ export default function LibrarianMembers() {
 
   const loadMembers = async () => {
     setLoading(true);
-    const data = await membersAPI.getAll();
-    setMembers(data);
-    setLoading(false);
+    await bshengine.user.search<Member>({
+      payload: {
+        filters: [
+          {field: 'roles', operator: 'ilike', value: 'member'}
+        ]
+      },
+      onSuccess: (response) => {
+        setMembers(response);
+        setLoading(false);
+      }
+    });
   };
 
   const handleSearch = async () => {
@@ -33,20 +42,45 @@ export default function LibrarianMembers() {
       return;
     }
     setLoading(true);
-    const results = await membersAPI.search(searchQuery);
-    setMembers(results);
-    setLoading(false);
+    await bshengine.user.search<Member>({
+      payload: {
+        filters: [
+          {field: 'roles', operator: 'ilike', value: 'member'},
+          {field: 'profile', operator: 'ilike', value: searchQuery}
+        ]
+      },
+      onSuccess: (response) => {
+        setMembers(response);
+        setLoading(false);
+      }
+    });
   };
 
   const handleViewMember = async (memberId: string) => {
-    const [transactions, fines] = await Promise.all([
-      transactionsAPI.getByMemberId(memberId),
-      finesAPI.getByMemberId(memberId),
-    ]);
-    const member = members.find((m) => m.id === memberId);
+    const member = members.data.find((m) => m.userId === memberId);
     setSelectedMember(member || null);
-    setMemberTransactions(transactions);
-    setMemberFines(fines);
+    
+    bshengine.entity('Transactions').search<Transaction>({
+      payload: {
+        filters: [
+          {field: 'memberId', operator: 'eq', value: memberId}
+        ]
+      },
+      onSuccess: (response) => {
+        setMemberTransactions(response.data);
+      }
+    });
+
+    bshengine.entity('Fines').search<Fine>({
+      payload: {
+        filters: [
+          {field: 'memberId', operator: 'eq', value: memberId}
+        ]
+      },
+      onSuccess: (response) => {
+        setMemberFines(response.data);
+      }
+    });
   };
 
   return (
@@ -79,7 +113,7 @@ export default function LibrarianMembers() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Members ({members.length})</CardTitle>
+            <CardTitle>Members ({members.pagination?.total || 0})</CardTitle>
             <CardDescription>All library members</CardDescription>
           </CardHeader>
           <CardContent>
@@ -96,13 +130,17 @@ export default function LibrarianMembers() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {members.map((member) => (
-                    <TableRow key={member.id}>
-                      <TableCell className="font-medium">{member.name}</TableCell>
-                      <TableCell>{member.membershipId}</TableCell>
+                  {members.data.map((member) => (
+                    <TableRow key={member.userId}>
+                      <TableCell className="font-medium">{member.profile.firstName} {member.profile.lastName}</TableCell>
+                      <TableCell>{member.profile.membershipId}</TableCell>
                       <TableCell>
                         <Badge
-                          variant={member.status === "active" ? "success" : "destructive"}
+                          variant={member.status === "ACTIVATED" ? "success"
+                            : member.status === "REQUIRED_ACTIVATION" ? "warning"
+                            : member.status === "DISABLED" ? "destructive"
+                            : member.status === "REQUIRED_RESET_PASSWORD" ? "warning"
+                            : "secondary"}
                         >
                           {member.status}
                         </Badge>
@@ -111,7 +149,7 @@ export default function LibrarianMembers() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleViewMember(member.id)}
+                          onClick={() => handleViewMember(member.userId)}
                         >
                           View
                         </Button>
@@ -128,12 +166,12 @@ export default function LibrarianMembers() {
           <Card>
             <CardHeader>
               <CardTitle>Member Details</CardTitle>
-              <CardDescription>{selectedMember.name}</CardDescription>
+              <CardDescription>{selectedMember?.profile.firstName} {selectedMember?.profile.lastName}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm font-medium">Email: {selectedMember.email}</p>
-                <p className="text-sm font-medium">Phone: {selectedMember.phone}</p>
+                <p className="text-sm font-medium">Phone: {selectedMember?.profile.phone}</p>
                 <p className="text-sm font-medium">Status: {selectedMember.status}</p>
               </div>
               <div>

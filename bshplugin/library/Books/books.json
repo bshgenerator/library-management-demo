@@ -1,5 +1,6 @@
 [
   {
+    "id": "1",
     "isbn": "978-0-14-143951-8",
     "title": "Pride and Prejudice",
     "author": "Jane Austen",
@@ -12,6 +13,7 @@
     "status": "available"
   },
   {
+    "id": "2",
     "isbn": "978-0-06-112008-4",
     "title": "To Kill a Mockingbird",
     "author": "Harper Lee",
@@ -24,6 +26,7 @@
     "status": "available"
   },
   {
+    "id": "3",
     "isbn": "978-0-7432-7356-5",
     "title": "The Great Gatsby",
     "author": "F. Scott Fitzgerald",
@@ -36,6 +39,7 @@
     "status": "checked_out"
   },
   {
+    "id": "4",
     "isbn": "978-0-14-118739-8",
     "title": "1984",
     "author": "George Orwell",
@@ -48,6 +52,7 @@
     "status": "available"
   },
   {
+    "id": "5",
     "isbn": "978-0-316-76948-0",
     "title": "The Catcher in the Rye",
     "author": "J.D. Salinger",
@@ -60,6 +65,7 @@
     "status": "available"
   },
   {
+    "id": "6",
     "isbn": "978-0-06-085052-4",
     "title": "Brave New World",
     "author": "Aldous Huxley",
