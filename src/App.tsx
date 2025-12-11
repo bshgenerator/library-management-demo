@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import DashboardRoute from "@/components/DashboardRoute";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import AdminDashboard from "@/pages/admin/Dashboard";
@@ -8,9 +9,11 @@ import AdminBooks from "@/pages/admin/Books";
 import AdminMembers from "@/pages/admin/Members";
 import AdminReports from "@/pages/admin/Reports";
 import AdminSettings from "@/pages/admin/Settings";
+import LibrarianDashboard from "@/pages/librarian/Dashboard";
 import LibrarianCheckout from "@/pages/librarian/Checkout";
 import LibrarianBooks from "@/pages/librarian/Books";
 import LibrarianMembers from "@/pages/librarian/Members";
+import MemberDashboard from "@/pages/member/Dashboard";
 import MemberBooks from "@/pages/member/Books";
 import MemberMyBooks from "@/pages/member/MyBooks";
 import MemberProfile from "@/pages/member/Profile";
@@ -24,14 +27,21 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <DashboardRoute>
+              </DashboardRoute>
+            }
+          />
+          {/* Admin Routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <Layout>
                   <AdminDashboard />
                 </Layout>
               </ProtectedRoute>
             }
           />
-          {/* Admin Routes */}
           <Route
             path="/admin/books"
             element={
@@ -74,6 +84,16 @@ function App() {
           />
           {/* Librarian Routes */}
           <Route
+            path="/librarian/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["librarian"]}>
+                <Layout>
+                  <LibrarianDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/librarian/checkout"
             element={
               <ProtectedRoute allowedRoles={["librarian"]}>
@@ -104,6 +124,16 @@ function App() {
             }
           />
           {/* Member Routes */}
+          <Route
+            path="/member/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["member"]}>
+                <Layout>
+                  <MemberDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/member/books"
             element={

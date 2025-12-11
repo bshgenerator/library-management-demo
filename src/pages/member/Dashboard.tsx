@@ -1,36 +1,61 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { transactionsAPI, reservationsAPI, finesAPI } from "@/services/api";
 import type { Transaction, Reservation, Fine } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BookOpen, Clock, DollarSign, AlertCircle } from "lucide-react";
+import type { BshResponse } from "@bshsolutions/sdk/types";
+import { bshengine } from "@/lib/bshengine";
 
 export default function MemberDashboard() {
   const { user } = useAuth();
-  const [currentBooks, setCurrentBooks] = useState<Transaction[]>([]);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [fines, setFines] = useState<Fine[]>([]);
+  const [currentBooks, setCurrentBooks] = useState<BshResponse<Transaction>>({ data: [] } as unknown as BshResponse<Transaction>);
+  const [reservations, setReservations] = useState<BshResponse<Reservation>>({ data: [] } as unknown as BshResponse<Reservation>);
+  const [fines, setFines] = useState<BshResponse<Fine>>({ data: [] } as unknown as BshResponse<Fine>);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.memberId) {
+    if (user?.userId) {
       loadData();
     }
   }, [user]);
 
   const loadData = async () => {
-    if (!user?.memberId) return;
+    if (!user?.userId) return;
     setLoading(true);
-    const [transactions, reservs, memberFines] = await Promise.all([
-      transactionsAPI.getByMemberId(user.memberId),
-      reservationsAPI.getByMemberId(user.memberId),
-      finesAPI.getByMemberId(user.memberId),
-    ]);
 
-    setCurrentBooks(transactions.filter((t) => t.status === "active"));
-    setReservations(reservs.filter((r) => r.status === "pending"));
-    setFines(memberFines.filter((f) => f.status === "unpaid"));
+    await Promise.all([
+      bshengine.entity('Transactions').search<Transaction>({
+        payload: {
+          filters: [
+            { field: 'memberId', operator: 'eq', value: user.userId }
+          ]
+        },
+        onSuccess: (response) => {
+          setCurrentBooks(response);
+        }
+      }),
+      bshengine.entity('Reservations').search<Reservation>({
+        payload: {
+          filters: [
+            { field: 'memberId', operator: 'eq', value: user.userId }
+          ]
+        },
+        onSuccess: (response) => {
+          setReservations(response);
+        }
+      }),
+      bshengine.entity('Fines').search<Fine>({
+        payload: {
+          filters: [
+            { field: 'memberId', operator: 'eq', value: user.userId }
+          ]
+        },
+        onSuccess: (response) => {
+          setFines(response);
+        }
+      })
+    ]);
     setLoading(false);
   };
 
@@ -38,21 +63,20 @@ export default function MemberDashboard() {
     return <div>Loading...</div>;
   }
 
-  const totalFines = fines.reduce((sum, f) => sum + f.amount, 0);
+  const totalFines = fines.data.reduce((sum, f) => sum + f.amount, 0);
   const upcomingDueDates = currentBooks
-    .filter((t) => {
+    .data.filter((t) => {
       const dueDate = new Date(t.dueDate);
       const today = new Date();
       const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return daysUntilDue <= 7 && daysUntilDue > 0;
-    })
-    .length;
+    }).length;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">My Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, {user?.name}</p>
+        <p className="text-muted-foreground">Welcome back, {user?.profile?.firstName} {user?.profile?.lastName}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -62,7 +86,7 @@ export default function MemberDashboard() {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currentBooks.length}</div>
+            <div className="text-2xl font-bold">{currentBooks.data.length}</div>
             <p className="text-xs text-muted-foreground">Books borrowed</p>
           </CardContent>
         </Card>
@@ -97,7 +121,7 @@ export default function MemberDashboard() {
             <CardDescription>Books you have checked out</CardDescription>
           </CardHeader>
           <CardContent>
-            {currentBooks.length === 0 ? (
+            {currentBooks.data.length === 0 ? (
               <p className="text-sm text-muted-foreground">No books currently borrowed</p>
             ) : (
               <Table>
@@ -109,7 +133,7 @@ export default function MemberDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentBooks.map((transaction) => {
+                  {currentBooks.data.map((transaction) => {
                     const dueDate = new Date(transaction.dueDate);
                     const today = new Date();
                     const isOverdue = dueDate < today;
@@ -144,7 +168,7 @@ export default function MemberDashboard() {
             <CardDescription>Books you have reserved</CardDescription>
           </CardHeader>
           <CardContent>
-            {reservations.length === 0 ? (
+            {reservations.data.length === 0 ? (
               <p className="text-sm text-muted-foreground">No active reservations</p>
             ) : (
               <Table>
@@ -156,7 +180,7 @@ export default function MemberDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reservations.map((reservation) => (
+                  {reservations.data.map((reservation) => (
                     <TableRow key={reservation.id}>
                       <TableCell>{reservation.bookId}</TableCell>
                       <TableCell>#{reservation.position}</TableCell>

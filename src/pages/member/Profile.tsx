@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { membersAPI } from "@/services/api";
 import type { Member } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, Mail, Phone, MapPin, Calendar, CreditCard } from "lucide-react";
+import { bshengine } from "@/lib/bshengine";
 
 export default function MemberProfile() {
   const { user } = useAuth();
@@ -17,39 +17,43 @@ export default function MemberProfile() {
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    firstName: "",
+    lastName: "",
     phone: "",
     address: "",
   });
 
   useEffect(() => {
-    if (user?.memberId) {
+    if (user?.userId) {
       loadMember();
     }
   }, [user]);
 
   const loadMember = async () => {
-    if (!user?.memberId) return;
+    if (!user?.userId) return;
     setLoading(true);
-    const memberData = await membersAPI.getById(user.memberId);
-    if (memberData) {
-      setMember(memberData);
-      setFormData({
-        name: memberData.name,
-        email: memberData.email,
-        phone: memberData.phone,
-        address: memberData.address,
-      });
-    }
-    setLoading(false);
+    await bshengine.user.getById({
+      id: user.userId,
+      onSuccess: (response) => {
+        setMember(response.data[0] as Member);
+        setFormData({
+          firstName: response.data[0].profile?.firstName || "",
+          lastName: response.data[0].profile?.lastName || "",
+          phone: response.data[0].profile?.phone || "",
+          address: response.data[0].profile?.address as string || "",
+        });
+        setLoading(false);
+      }
+    });
   };
 
   const handleSave = async () => {
-    if (!user?.memberId) return;
+    if (!user?.userId) return;
     setSaving(true);
     try {
-      await membersAPI.update(user.memberId, formData);
+      await bshengine.user.updateProfile({
+        payload: formData
+      });
       await loadMember();
       setIsEditing(false);
       alert("Profile updated successfully!");
@@ -63,10 +67,10 @@ export default function MemberProfile() {
   const handleCancel = () => {
     if (member) {
       setFormData({
-        name: member.name,
-        email: member.email,
-        phone: member.phone,
-        address: member.address,
+        firstName: member.profile.firstName,
+        lastName: member.profile.lastName,
+        phone: member.profile.phone,
+        address: member.profile.address,
       });
     }
     setIsEditing(false);
@@ -125,22 +129,9 @@ export default function MemberProfile() {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                 <Input
                   id="membershipId"
-                  value={member.membershipId}
+                  value={member.profile.membershipId}
                   disabled
                   className="bg-muted"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  disabled={!isEditing}
                 />
               </div>
             </div>
@@ -152,8 +143,33 @@ export default function MemberProfile() {
                 <Input
                   id="email"
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  value={member.email}
+                  disabled={true}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="firstName"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="lastName"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   disabled={!isEditing}
                 />
               </div>
@@ -213,7 +229,7 @@ export default function MemberProfile() {
               <div className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                 <Input
-                  value={member.membershipType}
+                  value={member.profile.membershipType}
                   disabled
                   className="bg-muted capitalize"
                 />
@@ -225,11 +241,11 @@ export default function MemberProfile() {
               <div className="flex items-center gap-2">
                 <Badge
                   variant={
-                    member.status === "active"
-                      ? "success"
-                      : member.status === "suspended"
-                      ? "destructive"
-                      : "secondary"
+                    member.status === "ACTIVATED" ? "success"
+                      : member.status === "REQUIRED_ACTIVATION" ? "warning"
+                        : member.status === "DISABLED" ? "destructive"
+                          : member.status === "REQUIRED_RESET_PASSWORD" ? "warning"
+                            : "secondary"
                   }
                 >
                   {member.status}
@@ -242,7 +258,7 @@ export default function MemberProfile() {
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <Input
-                  value={member.joinDate}
+                  value={member.profile.joinDate}
                   disabled
                   className="bg-muted"
                 />

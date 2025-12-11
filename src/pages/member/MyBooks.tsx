@@ -1,42 +1,69 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { transactionsAPI, booksAPI } from "@/services/api";
+import { transactionsAPI } from "@/services/api";
 import type { Transaction, Book } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BookOpen, Calendar, AlertCircle, RefreshCw } from "lucide-react";
+import { bshengine } from "@/lib/bshengine";
+import type { BshResponse } from "@bshsolutions/sdk/types";
 
 export default function MemberMyBooks() {
   const { user } = useAuth();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<BshResponse<Transaction>>({data: []} as unknown as BshResponse<Transaction>);
   const [books, setBooks] = useState<Record<string, Book>>({});
   const [loading, setLoading] = useState(true);
   const [renewing, setRenewing] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user?.memberId) {
+    if (user?.userId) {
       loadData();
     }
   }, [user]);
 
   const loadData = async () => {
-    if (!user?.memberId) return;
+    if (!user?.userId) return;
     setLoading(true);
-    const memberTransactions = await transactionsAPI.getByMemberId(user.memberId);
-    const activeTransactions = memberTransactions.filter((t) => t.status === "active");
-    setTransactions(activeTransactions);
 
-    // Load book details for each transaction
-    const bookPromises = activeTransactions.map((t) => booksAPI.getById(t.bookId));
-    const bookResults = await Promise.all(bookPromises);
-    const booksMap: Record<string, Book> = {};
-    bookResults.forEach((book, index) => {
-      if (book) {
-        booksMap[activeTransactions[index].bookId] = book;
+    bshengine.entity('Transactions').search<Transaction>({
+      payload: {
+        filters: [
+          { field: 'memberId', operator: 'eq', value: user.userId }
+        ]
+      },
+      onSuccess: (response) => {
+        setTransactions(response);
       }
     });
-    setBooks(booksMap);
+
+    bshengine.entity('Transactions').search<Transaction>({
+      payload: {
+        fields: ['id', 'bookId'],
+        filters: [
+          { field: 'memberId', operator: 'eq', value: user.userId },
+          { field: 'status', operator: 'eq', value: 'active' }
+        ]
+      },
+      onSuccess: (transactionsResponse) => {
+        bshengine.entity('Books').search<Book>({
+          payload: {
+            fields: ['id', 'title', 'author'],
+            filters: [
+              { field: 'id', operator: 'in', value: transactionsResponse.data.map((t) => t.bookId) }
+            ]
+          },
+          onSuccess: (booksResponse) => {
+            const booksMap: Record<string, Book> = {};
+            booksResponse.data.forEach((book) => {
+              booksMap[book.id] = book;
+            });
+            setBooks(booksMap);
+          }
+        });
+      }
+    });
+
     setLoading(false);
   };
 
@@ -83,11 +110,11 @@ export default function MemberMyBooks() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Currently Borrowed Books ({transactions.length})</CardTitle>
+          <CardTitle>Currently Borrowed Books ({transactions.pagination?.total || 0})</CardTitle>
           <CardDescription>Books you have checked out from the library</CardDescription>
         </CardHeader>
         <CardContent>
-          {transactions.length === 0 ? (
+          {transactions.pagination?.total === 0 ? (
             <div className="text-center py-8">
               <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">You don't have any borrowed books at the moment.</p>
@@ -104,7 +131,7 @@ export default function MemberMyBooks() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions.map((transaction) => {
+                {transactions.data.map((transaction) => {
                   const book = books[transaction.bookId];
                   const overdue = isOverdue(transaction.dueDate);
                   const daysLeft = daysUntilDue(transaction.dueDate);

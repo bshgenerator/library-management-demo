@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { booksAPI, reservationsAPI } from "@/services/api";
+import { reservationsAPI } from "@/services/api";
 import type { Book } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, BookOpen, Calendar } from "lucide-react";
+import { Search, BookOpen } from "lucide-react";
+import type { BshResponse } from "@bshsolutions/sdk/types";
+import { bshengine } from "@/lib/bshengine";
 
 export default function MemberBooks() {
   const { user } = useAuth();
-  const [books, setBooks] = useState<Book[]>([]);
+  const [books, setBooks] = useState<BshResponse<Book>>({data: []} as unknown as BshResponse<Book>);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [reserving, setReserving] = useState<string | null>(null);
@@ -22,8 +24,18 @@ export default function MemberBooks() {
 
   const loadBooks = async () => {
     setLoading(true);
-    const data = await booksAPI.getAll();
-    setBooks(data);
+    await bshengine.entity('Books').search<Book>({
+      payload: {
+        pagination: {
+          page: 1,
+          size: 5
+        }
+      },
+      onSuccess: (response) => {
+        setBooks(response);
+        setLoading(false);
+      }
+    });
     setLoading(false);
   };
 
@@ -33,17 +45,34 @@ export default function MemberBooks() {
       return;
     }
     setLoading(true);
-    const results = await booksAPI.search(searchQuery);
-    setBooks(results);
+    await bshengine.entity('Books').search<Book>({
+      payload: {
+        filters: [
+          {
+            operator: 'or',
+            filters: [
+              {field: 'title', operator: 'ilike', value: searchQuery},
+              {field: 'author', operator: 'ilike', value: searchQuery},
+              {field: 'isbn', operator: 'ilike', value: searchQuery},
+              {field: 'genre', operator: 'ilike', value: searchQuery},
+            ]
+          }
+        ]
+      },
+      onSuccess: (response) => {
+        setBooks(response);
+        setLoading(false);
+      }
+    });
     setLoading(false);
   };
 
   const handleReserve = async (bookId: string) => {
-    if (!user?.memberId) return;
+    if (!user?.userId) return;
     
     setReserving(bookId);
     try {
-      await reservationsAPI.create(bookId, user.memberId);
+      await reservationsAPI.create(bookId, user.userId);
       alert("Book reserved successfully!");
       loadBooks();
     } catch (error) {
@@ -82,7 +111,7 @@ export default function MemberBooks() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Available Books ({books.length})</CardTitle>
+          <CardTitle>Available Books ({books.pagination?.total || 0})</CardTitle>
           <CardDescription>Browse and reserve books from the catalog</CardDescription>
         </CardHeader>
         <CardContent>
@@ -102,7 +131,7 @@ export default function MemberBooks() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {books.map((book) => (
+                {books.data.map((book) => (
                   <TableRow key={book.id}>
                     <TableCell className="font-medium">{book.title}</TableCell>
                     <TableCell>{book.author}</TableCell>
